@@ -1,32 +1,10 @@
 // Mundo: duas versões da cidade (2026 em ruínas, 1996 viva), pré-renderizadas em camadas
 const T = 16, COLS = 20, ROWS = 15, W = COLS * T, H = ROWS * T, Z = 2;
-const YEAR = { presente: 2026, passado: 1996 };
-const TOD0 = 14 * 3600 + 20 * 60;
-// # muro/cerca  H casa  X casa do Amadeu (some em 2026 depois do corte)  C relógio  B broto  P início
-const LAYOUT = [
-"####################",
-"#........#.........#",
-"#.HH.XX..#.HHH..CC.#",
-"#.HH.XX..#.HHH..CC.#",
-"#........#.........#",
-"#........#.........#",
-"#........B.........#",
-"#........B.........#",
-"#........#.........#",
-"#.HH.HH..#.........#",
-"#.HH.HH..#.HHH.....#",
-"#........#.HHH.....#",
-"#........#.........#",
-"#P.......#.........#",
-"####################"
-];
-const START = { x: 24, y: 216 }, CLOCK = { x: 272, y: 48 }, BUSH = { x: 152, y: 112 }, AMADEU = { x: 100, y: 108 };
-
-function tile(tx, ty, era, cut) { const c = LAYOUT[ty][tx]; return c === 'X' && era === 'presente' && cut ? '.' : c; }
+function tile(tx, ty) { const c = LAYOUT[ty][tx], p = PLACE[c]; return p && ERASED.has(p) ? '.' : c; }
 function solidAt(tx, ty, cut, era) {
   if (tx < 0 || ty < 0 || tx >= COLS || ty >= ROWS) return true;
   const c = tile(tx, ty, era, cut);
-  return c === '#' || c === 'H' || c === 'X' || c === 'C' || (c === 'B' && !cut);
+  return c === '#' || isHouse(c) || c === 'C' || (c === 'B' && !cut);
 }
 function hash(x, y) { let h = (x * 374761393 + y * 668265263) >>> 0; h = ((h ^ (h >>> 13)) * 1274126177) >>> 0; return (h ^ (h >>> 16)) >>> 0; }
 function px(c, col, x, y, w, h) { c.fillStyle = col; c.fillRect(x, y, w, h); }
@@ -37,7 +15,7 @@ function sprite(c, rows, pal, x, y) {
 function ang(t) { const s = TOD0 + t, q = 6.2832, o = -1.5708; return [(s / 43200) % 1 * q + o, (s / 3600) % 1 * q + o, (s / 60) % 1 * q + o]; }
 function hms(t) { const s = Math.floor(TOD0 + t) % 86400, p = n => String(n).padStart(2, '0'); return p(s / 3600 | 0) + ':' + p((s / 60 | 0) % 60) + ':' + p(s % 60); }
 const isPath = (tx, ty) => ty === 6 || ty === 7 || tx === 4 || (tx === 15 && ty < 8);
-const isHouse = c => c === 'H' || c === 'X';
+const isHouse = c => c >= 'a' && c <= 'f';
 
 function drawTiles(g, era, cut) {
   g.scale(Z, Z);
@@ -52,10 +30,9 @@ function drawTiles(g, era, cut) {
     } else if (c === '.' || c === 'P') {
       R(G[1 + (h & 1)], x + (h >>> 3) % 12, y + (h >>> 7) % 12, 2, 2);
       R(G[1 + ((h >>> 1) & 1)], x + (h >>> 11) % 12, y + (h >>> 15) % 12, 2, 2);
-      if (past && h % 7 === 0) { R('#fff', x + 5, y + 5, 2, 2); R('#f4d03f', x + 5, y + 5, 1, 1); R('#e85d75', x + 11, y + 10, 2, 2); }
+      if (past && h % 7 === 0 && !ERASED.has('flores')) { R('#fff', x + 5, y + 5, 2, 2); R('#f4d03f', x + 5, y + 5, 1, 1); R('#e85d75', x + 11, y + 10, 2, 2); }
       if (!past && h % 9 === 0) { R('#7a7f78', x + 4, y + 9, 4, 3); R('#9aa098', x + 4, y + 9, 3, 1); }
     }
-    if (LAYOUT[ty][tx] === 'X' && c === '.') { R('#f4d84a', x + 4, y + 5, 2, 2); R('#f0f0f0', x + 10, y + 9, 2, 2); }
     if (c === '#') {
       if (!past) {
         const o = (tx + ty) % 2;
@@ -73,7 +50,7 @@ function drawTiles(g, era, cut) {
         else { R('#a8402f', x, y, T, T); R('#c4553f', x, y + 3, T, 2); R('#c4553f', x, y + 9, T, 2); R('#7d2c20', x, y + 14, T, 2); if (h % 3 === 0) R('#3a2a2a', x + 4, y + 5, 5, 4); }
       } else {
         R(past ? '#f0e6cf' : '#c9a982', x, y, T, T); R(past ? '#7a5232' : '#a88a64', x, y, T, 2);
-        if (!isHouse(LAYOUT[ty + 1][tx]) && tx % 2 === 0) { R(c === 'X' ? '#2a5a9a' : '#6b4326', x + 4, y + 4, 8, 12); R('#e0b84a', x + 10, y + 10, 1, 1); }
+        if (!isHouse(LAYOUT[ty + 1][tx]) && tx % 2 === 0) { R(c === 'a' ? '#2a5a9a' : '#6b4326', x + 4, y + 4, 8, 12); R('#e0b84a', x + 10, y + 10, 1, 1); }
         else {
           R('#7a5a3a', x + 3, y + 3, 10, 8); R(past ? '#ffd86a' : (h & 1 ? '#27323a' : '#6cc0e8'), x + 4, y + 4, 8, 6); R('#7a5a3a', x + 7, y + 4, 1, 6);
           if (past) { R('#e85d75', x + 4, y + 11, 3, 2); R('#6bbf4a', x + 7, y + 11, 5, 2); }
@@ -93,6 +70,7 @@ function drawTiles(g, era, cut) {
   R(past ? '#e0e0f0' : '#8e8ea2', X + 2, Y + 3, 2, 26); R(past ? '#d8b04a' : '#55555f', X + 6, Y + 5, 20, 20); R(past ? '#f6f0dc' : '#9c9c92', X + 7, Y + 6, 18, 18);
   if (!past) { R('#3a3a44', X + 12, Y + 6, 1, 6); R('#3a3a44', X + 13, Y + 11, 3, 1); R('#3a3a44', X + 16, Y + 12, 1, 6); R('#2a5a2a', X, Y + 6, 3, 26); R('#2a5a2a', X + 29, Y + 10, 3, 22); R('#3f7f3a', X + 1, Y + 14, 2, 2); }
   clockFace(g, past);
+  sketch(g, past);
 }
 function drawHands(c, live, t) {
   const a = live ? ang(t) : [5.1, 2.2, 0];
@@ -122,7 +100,26 @@ function detail(g, era, cut) {
 function clockFace(g, past) {
   const R = (c, x, y, w, h) => px(g, c, x, y, w, h), arc = (c, r) => { g.fillStyle = c; g.beginPath(); g.arc(272, 47, r, 0, 6.2832); g.fill(); };
   R(past ? '#b8b8c8' : '#7e7e92', 262, 37, 20, 20);
+  if (ERASED.has('sino')) { g.save(); g.strokeStyle = 'rgba(240,240,240,0.9)'; g.lineWidth = 0.5; g.setLineDash([1, 1]); g.strokeRect(270, 27, 4, 4); g.restore(); } else { R('#e8c040', 270, 27, 4, 4); R('#b8901c', 270, 30.5, 4, 0.5); }
   arc(past ? '#d8b04a' : '#55555f', 10.5); arc(past ? '#fbf6e4' : '#a4a49a', 9);
   for (let i = 0; i < 12; i++) { const a = i * 0.5236; R('#333', 272 + Math.cos(a) * 7.6 - 0.25, 47 + Math.sin(a) * 7.6 - 0.25, 0.5, i % 3 ? 0.5 : 1); }
   if (!past) { g.strokeStyle = '#2a2a33'; g.lineWidth = 0.5; g.beginPath(); g.moveTo(268, 41); g.lineTo(270, 46); g.lineTo(268, 49); g.lineTo(271, 54); g.stroke(); }
+}
+
+// Peças apagadas viram desenho a lápis, em todas as eras
+function sketch(g, past) {
+  g.save(); g.strokeStyle = 'rgba(240,240,240,0.9)'; g.lineWidth = 0.5; g.setLineDash([1.5, 1]);
+  PECAS.forEach(p => {
+    if (!ERASED.has(p.id) || !p.box) return;
+    const x = p.box[0] * T, y = p.box[1] * T, w = p.box[2] * T, h = p.box[3] * T;
+    g.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+    g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip(); g.beginPath();
+    for (let i = -h; i < w; i += 4) { g.moveTo(x + i, y + h); g.lineTo(x + i + h, y); }
+    g.stroke(); g.restore();
+  });
+  if (ERASED.has('flores') && past) for (let ty = 0; ty < ROWS; ty++) for (let tx = 0; tx < COLS; tx++) {
+    const c = tile(tx, ty);
+    if ((c === '.' || c === 'P') && !isPath(tx, ty) && hash(tx, ty) % 7 === 0) { g.beginPath(); g.arc(tx * T + 6, ty * T + 6, 1.5, 0, 6.2832); g.stroke(); }
+  }
+  g.restore();
 }
