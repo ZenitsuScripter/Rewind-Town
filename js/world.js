@@ -1,5 +1,5 @@
 // Mundo: duas versões da cidade (2026 em ruínas, 1996 viva), pré-renderizadas em camadas
-const T = 16, COLS = 20, ROWS = 15, W = COLS * T, H = ROWS * T;
+const T = 16, COLS = 20, ROWS = 15, W = COLS * T, H = ROWS * T, Z = 2;
 const YEAR = { presente: 2026, passado: 1996 };
 const TOD0 = 14 * 3600 + 20 * 60;
 // # muro/cerca  H casa  X casa do Amadeu (some em 2026 depois do corte)  C relógio  B broto  P início
@@ -40,6 +40,7 @@ const isPath = (tx, ty) => ty === 6 || ty === 7 || tx === 4 || (tx === 15 && ty 
 const isHouse = c => c === 'H' || c === 'X';
 
 function drawTiles(g, era, cut) {
+  g.scale(Z, Z);
   const past = era === 'passado', R = (c, x, y, w, h) => px(g, c, x, y, w, h);
   const G = past ? ['#86b043', '#78a23a', '#9bc450'] : ['#3b6a48', '#325c3e', '#4a7b52'];
   for (let ty = 0; ty < ROWS; ty++) for (let tx = 0; tx < COLS; tx++) {
@@ -86,10 +87,12 @@ function drawTiles(g, era, cut) {
       else { R('#1f5a2a', x + 1, y + 1, 14, 14); R('#2f7a38', x + 3, y + 2, 10, 8); [[2, 2], [12, 4], [5, 11], [11, 12]].forEach(p => R('#d8d8b0', x + p[0], y + p[1], 1, 2)); }
     }
   }
+  detail(g, era, cut);
   const X = 256, Y = 32;
   R(past ? '#b8b8c8' : '#7e7e92', X, Y, 32, 32); R(past ? '#d8b04a' : '#5a5a6e', X, Y, 32, 3); R(past ? '#d8b04a' : '#4a4a5e', X, Y + 29, 32, 3);
   R(past ? '#e0e0f0' : '#8e8ea2', X + 2, Y + 3, 2, 26); R(past ? '#d8b04a' : '#55555f', X + 6, Y + 5, 20, 20); R(past ? '#f6f0dc' : '#9c9c92', X + 7, Y + 6, 18, 18);
   if (!past) { R('#3a3a44', X + 12, Y + 6, 1, 6); R('#3a3a44', X + 13, Y + 11, 3, 1); R('#3a3a44', X + 16, Y + 12, 1, 6); R('#2a5a2a', X, Y + 6, 3, 26); R('#2a5a2a', X + 29, Y + 10, 3, 22); R('#3f7f3a', X + 1, Y + 14, 2, 2); }
+  clockFace(g, past);
 }
 function drawHands(c, live, t) {
   const a = live ? ang(t) : [5.1, 2.2, 0];
@@ -97,4 +100,29 @@ function drawHands(c, live, t) {
   c.moveTo(272, 47); c.lineTo(272 + Math.cos(a[1]) * 7, 47 + Math.sin(a[1]) * 7);
   c.moveTo(272, 47); c.lineTo(272 + Math.cos(a[0]) * 4, 47 + Math.sin(a[0]) * 4); c.stroke();
   if (live) { c.strokeStyle = '#d33'; c.beginPath(); c.moveTo(272, 47); c.lineTo(272 + Math.cos(a[2]) * 8, 47 + Math.sin(a[2]) * 8); c.stroke(); }
+}
+
+// Detalhes em meio-pixel: grama, sombras suaves, telhas, copas redondas
+function detail(g, era, cut) {
+  const past = era === 'passado', R = (c, x, y, w, h) => px(g, c, x, y, w, h);
+  const shade = (x, y, h, a) => { const q = g.createLinearGradient(0, y, 0, y + h); q.addColorStop(0, 'rgba(0,0,20,' + a + ')'); q.addColorStop(1, 'rgba(0,0,20,0)'); g.fillStyle = q; g.fillRect(x, y, T, h); };
+  for (let ty = 0; ty < ROWS; ty++) for (let tx = 0; tx < COLS; tx++) {
+    const c = tile(tx, ty, era, cut), x = tx * T, y = ty * T, edge = tx === 0 || ty === 0 || tx === COLS - 1 || ty === ROWS - 1;
+    if ((c === '.' || c === 'P') && !isPath(tx, ty)) for (let i = 0; i < 6; i++) { const q = hash(tx * 7 + i, ty * 13 + i); R(past ? (q & 1 ? '#a8d45c' : '#6c9833') : (q & 1 ? '#568c5e' : '#294e36'), x + (q >>> 3) % 15 + 0.5, y + (q >>> 9) % 14, 0.5, 1.5); }
+    if (c === '#' && !past) { R('#6e6e86', x, y, T, 0.5); R('#2c2c3a', x, y + 15.5, T, 0.5); }
+    if (c === '#' && past && edge) [['#1f5a22', 8, 7, 8.5], ['#2f7d2c', 8, 6.5, 7], ['#4c9a3a', 6, 4.5, 3.5], ['#7cc65a', 5.5, 4, 1.6]].forEach(a => { g.fillStyle = a[0]; g.beginPath(); g.arc(x + a[1], y + a[2], a[3], 0, 6.2832); g.fill(); });
+    if (isHouse(c)) {
+      if (!isHouse(LAYOUT[ty - 1][tx])) for (let i = 1; i < T; i += 3) R('rgba(0,0,0,0.2)', x, y + i + 1.5, T, 0.5);
+      else R('rgba(0,0,0,0.1)', x, y, T, 4);
+    }
+    const b = ty + 1 < ROWS ? tile(tx, ty + 1, era, cut) : '#';
+    if ((isHouse(c) || c === '#' || c === 'C') && (b === '.' || b === 'P')) shade(x, y + T, 6, 0.35);
+  }
+}
+function clockFace(g, past) {
+  const R = (c, x, y, w, h) => px(g, c, x, y, w, h), arc = (c, r) => { g.fillStyle = c; g.beginPath(); g.arc(272, 47, r, 0, 6.2832); g.fill(); };
+  R(past ? '#b8b8c8' : '#7e7e92', 262, 37, 20, 20);
+  arc(past ? '#d8b04a' : '#55555f', 10.5); arc(past ? '#fbf6e4' : '#a4a49a', 9);
+  for (let i = 0; i < 12; i++) { const a = i * 0.5236; R('#333', 272 + Math.cos(a) * 7.6 - 0.25, 47 + Math.sin(a) * 7.6 - 0.25, 0.5, i % 3 ? 0.5 : 1); }
+  if (!past) { g.strokeStyle = '#2a2a33'; g.lineWidth = 0.5; g.beginPath(); g.moveTo(268, 41); g.lineTo(270, 46); g.lineTo(268, 49); g.lineTo(271, 54); g.stroke(); }
 }
