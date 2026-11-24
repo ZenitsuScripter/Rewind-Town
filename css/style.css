@@ -1,3 +1,3 @@
-html, body { margin: 0; height: 100%; background: #12121a; overflow: hidden; font-family: monospace; display: flex; align-items: center; justify-content: center; }
-canvas { image-rendering: crisp-edges; image-rendering: pixelated; background: #000; }
-#hud { position: fixed; left: 0; right: 0; bottom: 4px; text-align: center; color: #8d8da6; font-size: 12px; pointer-events: none; }
+html, body { margin: 0; height: 100%; background: #0a0a12; overflow: hidden; font-family: monospace; }
+canvas { position: fixed; left: 0; top: 0; image-rendering: crisp-edges; image-rendering: pixelated; }
+#hud { position: fixed; left: 0; right: 0; bottom: 4px; text-align: center; color: rgba(200,200,220,0.55); font-size: 11px; pointer-events: none; }
