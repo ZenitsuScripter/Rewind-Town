@@ -18,7 +18,7 @@ function offerKey(code) {
   else if (code === 'ArrowRight' || code === 'KeyD') o.i = (o.i + 1) % k;
   else if (code === 'Escape' && o.n === o.n0) S.offer = null;
   else if (code === 'KeyE' || code === 'Enter' || code === 'Space') {
-    ERASED.add(o.opts[o.i].id); saveGame(); o.n--;
+    ERASED.add(o.opts[o.i].id); clue('preco'); saveGame(); o.n--;
     if (o.n > 0 && (o.opts = offerList()).length) o.i = 0;
     else { S.offer = null; o.then(); if (ERASED.size >= PECAS.length) S.end = 'branco'; }
   }
@@ -32,14 +32,15 @@ function tryTravel() {
 function travel(to) {
   S.from = S.era; S.era = to; S.trav = 50; S.eraCd = 60;
   say(to === 'passado' ? 'Você viajou para ' + YEAR[to] + '.' : 'De volta a ' + YEAR[to] + '.');
-  if (to === 'passado' && !S.talked && !ERASED.has('amadeu')) { S.dlg = FIRST; S.di = 0; S.talked = 1; }
+  if (to === 'passado' && !S.talked && !ERASED.has('amadeu')) { S.dlg = FIRST; S.di = 0; S.talked = 1; clue('tick'); }
 }
-function saveGame() { try { localStorage.setItem('tick.save', JSON.stringify({ e: [...ERASED] })); } catch (e) {} }
+function saveGame() { try { localStorage.setItem('tick.save', JSON.stringify({ e: [...ERASED], c: [...FOUND] })); } catch (e) {} }
 function clearSave() { try { localStorage.removeItem('tick.save'); } catch (e) {} }
 function loadGame() {
   try {
     const d = JSON.parse(localStorage.getItem('tick.save') || 'null');
     if (d && d.e) d.e.forEach(id => { if (PECAS.some(p => p.id === id)) ERASED.add(id); });
+    if (d && d.c) d.c.forEach(id => { if (CLUES.some(c => c.id === id)) FOUND.add(id); });
     if (ERASED.size >= PECAS.length) S.end = 'branco';
   } catch (e) {}
 }

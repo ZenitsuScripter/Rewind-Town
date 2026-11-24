@@ -11,9 +11,11 @@ addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 function onKey(code) {
   if (code === 'KeyF') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); return; }
   if (S.won || S.end) { if (code === 'Enter') resetGame(); return; }
+  if (S.book) { if (code === 'KeyC' || code === 'Escape' || code === 'KeyE' || code === 'Enter') S.book = false; return; }
   if (S.offer) { offerKey(code); return; }
   if (S.dlg) { if (code === 'KeyE' || code === 'Enter' || code === 'Space') { S.di++; if (S.di >= S.dlg.length) S.dlg = null; } return; }
   if (S.caught) return;
+  if (code === 'KeyC') { S.book = true; return; }
   if (code === 'KeyT') tryTravel();
   if (code === 'KeyE') interact();
 }

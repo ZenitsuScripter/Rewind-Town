@@ -34,7 +34,7 @@ function draw() {
   ctx.setTransform(1, 0, 0, 1, -Math.round(camX), -Math.round(camY));
   ctx.drawImage(layer(S.era, S.cut), 0, 0);
   ctx.scale(Z, Z);
-  drawHands(ctx, past || S.won, S.t);
+  drawHands(ctx, past, S.t);
   drawParticles(ctx, past);
   drawActors(ctx);
   ctx.setTransform(1, 0, 0, 1, 0, 0);

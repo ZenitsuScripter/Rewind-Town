@@ -54,3 +54,13 @@ const AFTER = [
   ['Amadeu', 'O portão está livre. Volte a 2026 (T) e conserte a torre.'],
   ['Amadeu', 'Plantar o broto de novo, depois de você já ter passado por lá, seria um paradoxo. O Tick cobraria o dobro.']
 ];
+
+// Pistas do caderno do Teo: o progresso do mistério é saber, não achar itens
+const CLUES = [
+  { id: 'tick', t: 'O Tick sem origem', x: 'O Amadeu desenhou o relógio de bolso, mas só vai construí-lo em 1997.' },
+  { id: 'broto', t: 'O broto do portão', x: 'Em 1996 era só um broto. Em 2026 virou uma parede de espinhos.' },
+  { id: 'preco', t: 'O preço', x: 'Cada ida ao passado cobra uma peça da cidade. O que some vira traço de lápis.' },
+  { id: 'lacuna', t: 'Lacunas', x: 'Onde havia uma peça só sobrou o traço. Ninguém lembra do que era.' },
+  { id: 'vigias', t: 'Os Vigias', x: 'Os Vigias caçam quem viaja com o Tick. Quem são eles?' },
+  { id: '1420', t: 'O minuto 14:20', x: 'A torre parou às 14:20, a mesma hora em que o Teo achou o Tick.' }
+];

@@ -41,10 +41,10 @@ function drawHUD(past) {
   }
   if (S.won) {
     veil('rgba(0,0,0,0.78)'); const m = HH / 2;
-    text('A TORRE VOLTOU A BATER', HW / 2, m - 34, '#f0c060', 'center', 'bold 11px monospace');
+    text('FIM DA FASE 1', HW / 2, m - 34, '#f0c060', 'center', 'bold 11px monospace');
     text('2026 · ' + S.winT, HW / 2, m - 16, '#fff', 'center');
-    text('Peças que restaram: ' + (PECAS.length - ERASED.size) + ' de ' + PECAS.length, HW / 2, m, '#9ad0ff', 'center');
-    text('O Tick cobrou seu preço.', HW / 2, m + 12, '#9ad0ff', 'center');
+    text('A torre parou às 14:20. Por quê?', HW / 2, m, '#9ad0ff', 'center');
+    text('Pistas: ' + FOUND.size + ' de ' + CLUES.length + ' · Peças que restaram: ' + (PECAS.length - ERASED.size) + ' de ' + PECAS.length, HW / 2, m + 12, '#9ad0ff', 'center');
     text('ENTER: jogar de novo', HW / 2, m + 34, '#aaa', 'center');
   }
   if (S.end) {
@@ -53,7 +53,9 @@ function drawHUD(past) {
     text('A cidade esqueceu tudo, até você.', HW / 2, HH / 2, '#444', 'center');
     text('ENTER: recomeçar', HW / 2, HH / 2 + 22, '#777', 'center');
   }
+  if (S.note > 0) { px(ctx, 'rgba(0,0,0,0.65)', HW / 2 - 66, 22, 132, 14); text('Nova pista no caderno (C)', HW / 2, 25, '#f0c060', 'center'); }
   if (S.offer) drawOffer();
+  if (S.book) drawBook();
 }
 
 // Tela da cobrança: o Tick oferece peças e o jogador escolhe o que a cidade esquece
@@ -72,4 +74,20 @@ function drawOffer() {
     wrap(EFEITO[p.tipo], cw - 8).forEach((l, j) => text(l, x + cw / 2, y + 46 + j * 10, sel ? '#9ad0ff' : '#777', 'center'));
   });
   text('← → escolher · E confirmar' + (o.n === o.n0 ? ' · Esc desistir' : ''), HW / 2, by + 112, '#9a9ab0', 'center');
+}
+
+// Caderno do Teo: as pistas descobertas
+function drawBook() {
+  const HW = VW / Hs, HH = VH / Hs, bw = Math.min(HW - 16, 300), bx = (HW - bw) / 2;
+  const rh = Math.min(26, (HH - 44) / CLUES.length), ph = CLUES.length * rh + 28, by = (HH - ph) / 2;
+  veil('rgba(0,0,0,0.78)');
+  px(ctx, '#f0c060', bx - 1, by - 1, bw + 2, ph + 2); px(ctx, '#14141f', bx, by, bw, ph);
+  text('CADERNO DO TEO · ' + FOUND.size + '/' + CLUES.length, bx + 6, by + 5, '#f0c060');
+  CLUES.forEach((c, k) => {
+    const y = by + 20 + k * rh, ok = FOUND.has(c.id);
+    text(ok ? c.t : '???', bx + 6, y, ok ? '#9ad0ff' : '#666');
+    ctx.font = '8px monospace';
+    if (ok) wrap(c.x, bw - 12).slice(0, 2).forEach((l, j) => text(l, bx + 6, y + 9 + j * 8, '#fff'));
+  });
+  text('C ou Esc: fechar', bx + bw - 6, by + ph - 11, '#9a9ab0', 'right');
 }

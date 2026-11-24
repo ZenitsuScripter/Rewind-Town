@@ -73,7 +73,7 @@ function drawTiles(g, era, cut) {
   sketch(g, past);
 }
 function drawHands(c, live, t) {
-  const a = live ? ang(t) : [5.1, 2.2, 0];
+  const a = live ? ang(t) : ang(0);
   c.lineWidth = 1; c.strokeStyle = '#222'; c.beginPath();
   c.moveTo(272, 47); c.lineTo(272 + Math.cos(a[1]) * 7, 47 + Math.sin(a[1]) * 7);
   c.moveTo(272, 47); c.lineTo(272 + Math.cos(a[0]) * 4, 47 + Math.sin(a[0]) * 4); c.stroke();
