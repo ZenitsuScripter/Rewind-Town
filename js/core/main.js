@@ -24,7 +24,8 @@ function fit() {
 addEventListener('resize', fit); fit();
 
 function draw() {
-  const past = S.era === 'passado';
+  if (S.title) { drawTitle(); return; }
+  const past = YEAR[S.era] < 2000;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   px(ctx, '#0a0a12', 0, 0, VW, VH);
   const WW = W * Z, WH = H * Z;
@@ -34,12 +35,12 @@ function draw() {
   ctx.setTransform(1, 0, 0, 1, -Math.round(camX), -Math.round(camY));
   ctx.drawImage(layer(S.era, S.cut), 0, 0);
   ctx.scale(Z, Z);
-  drawHands(ctx, past, S.t);
+  if (YEAR[S.era] > 1950) drawHands(ctx, past, S.t);
   drawParticles(ctx, past);
   drawActors(ctx);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-  veil(past ? 'rgba(255,200,120,0.12)' : 'rgba(10,15,40,0.22)');
+  veil(YEAR[S.era] < 1950 ? 'rgba(170,120,60,0.3)' : past ? 'rgba(255,200,120,0.12)' : 'rgba(10,15,40,0.22)');
   if (S.stopped) veil('rgba(110,140,255,0.28)');
   if (S.rewinding) { veil('rgba(170,80,220,0.25)'); ctx.fillStyle = 'rgba(255,255,255,0.12)'; for (let y = (S.frame * 2) % 6; y < VH; y += 6) ctx.fillRect(0, y, VW, 1); }
   if (S.trav > 0) {
@@ -47,6 +48,7 @@ function draw() {
     ctx.fillStyle = 'rgba(120,200,255,0.3)'; for (let i = 0; i < 6; i++) ctx.fillRect(0, hash(i, S.trav) % VH, VW, 2);
   }
 
+  if (S.glitch > 0) { veil('rgba(255,255,255,0.18)'); ctx.fillStyle = 'rgba(255,255,255,0.5)'; for (let i = 0; i < 5; i++) ctx.fillRect(0, hash(i, S.glitch) % VH, VW, 1); }
   const vg = ctx.createRadialGradient(VW / 2, VH / 2, Math.min(VW, VH) * 0.35, VW / 2, VH / 2, Math.max(VW, VH) * 0.75);
   vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.45)'); ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
   drawHUD(past);
@@ -58,6 +60,6 @@ function loop(now) {
   while (acc >= 1000 / 60) { tick(); acc -= 1000 / 60; }
   draw(); requestAnimationFrame(loop);
 }
-resetGame(false); loadGame(); if (!ERASED.size) S.dlg = INTRO;
+loadFase(0); resetGame(false); goTitle();
 layer('presente', false); layer('passado', false);
 requestAnimationFrame(loop);

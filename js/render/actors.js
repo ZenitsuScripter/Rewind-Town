@@ -16,7 +16,7 @@ function drawChar(c, x, y, v, st, mv) {
   if (v.w) { c.fillStyle = '#ffe066'; c.fillRect(x + 1.2, y - 0.6, 1, 1); }
 }
 function drawActors(c) {
-  if (S.era === 'passado') { const gone = ERASED.has('amadeu'); c.globalAlpha = gone ? 0.5 : 1; drawChar(c, AMADEU.x, AMADEU.y, gone ? V_S : V_A, 0, 0); c.globalAlpha = 1; }
+  if (S.era === 'passado' && AMADEU) { const gone = ERASED.has('amadeu'); c.globalAlpha = gone ? 0.5 : 1; drawChar(c, AMADEU.x, AMADEU.y, gone ? V_S : V_A, 0, 0); c.globalAlpha = 1; }
   for (const g of S.guards) {
     const q = c.createRadialGradient(g.x, g.y, 1, g.x, g.y, 16); q.addColorStop(0, 'rgba(255,225,130,0.35)'); q.addColorStop(1, 'rgba(255,225,130,0)');
     c.fillStyle = q; c.fillRect(g.x - 16, g.y - 16, 32, 32);

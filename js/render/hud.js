@@ -12,7 +12,7 @@ const veil = (col) => { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fill
 function drawHUD(past) {
   ctx.setTransform(Hs, 0, 0, Hs, 0, 0); const HW = VW / Hs, HH = VH / Hs;
   // HUD: era + energia
-  text(past ? 'PASSADO' : 'PRESENTE', 6, 5, past ? '#f0c060' : '#9ad0ff');
+  text(S.era === 'passado' ? 'PASSADO' : 'PRESENTE', 6, 5, past ? '#f0c060' : '#9ad0ff');
   px(ctx, '#111', 6, 16, 62, 6); px(ctx, S.energy < 15 ? '#e05050' : '#58d0ff', 7, 17, 60 * S.energy / 100, 4);
   PECAS.forEach((p, i) => { if (ERASED.has(p.id)) { ctx.strokeStyle = '#d8d8d8'; ctx.lineWidth = 0.5; ctx.strokeRect(6.25 + i * 7, 25.25, 4.5, 4.5); } else px(ctx, '#f0c060', 6 + i * 7, 25, 5, 5); });
   text('PEÇAS', 74, 23, '#9a9ab0');
@@ -41,11 +41,11 @@ function drawHUD(past) {
   }
   if (S.won) {
     veil('rgba(0,0,0,0.78)'); const m = HH / 2;
-    text('FIM DA FASE 1', HW / 2, m - 34, '#f0c060', 'center', 'bold 11px monospace');
-    text('2026 · ' + S.winT, HW / 2, m - 16, '#fff', 'center');
-    text('A torre parou às 14:20. Por quê?', HW / 2, m, '#9ad0ff', 'center');
-    text('Pistas: ' + FOUND.size + ' de ' + CLUES.length + ' · Peças que restaram: ' + (PECAS.length - ERASED.size) + ' de ' + PECAS.length, HW / 2, m + 12, '#9ad0ff', 'center');
-    text('ENTER: jogar de novo', HW / 2, m + 34, '#aaa', 'center');
+    text(F.fim[0], HW / 2, m - 34, '#f0c060', 'center', 'bold 11px monospace');
+    text(YEAR[S.era] + ' · ' + S.winT, HW / 2, m - 16, '#fff', 'center');
+    text(F.fim[1], HW / 2, m, '#9ad0ff', 'center');
+    text('Pistas: ' + FOUND.size + ' de ' + CLUES.length + ' · Peças que restaram: ' + (PECAS.length - nGone()) + ' de ' + PECAS.length, HW / 2, m + 12, '#9ad0ff', 'center');
+    text(S.won ? F.fim[2] : 'ENTER: recomeçar a fase', HW / 2, m + 34, '#aaa', 'center');
   }
   if (S.end) {
     veil('rgba(255,255,255,0.92)');
@@ -56,6 +56,7 @@ function drawHUD(past) {
   if (S.note > 0) { px(ctx, 'rgba(0,0,0,0.65)', HW / 2 - 66, 22, 132, 14); text('Nova pista no caderno (C)', HW / 2, 25, '#f0c060', 'center'); }
   if (S.offer) drawOffer();
   if (S.book) drawBook();
+  if (S.card > 0) drawCard();
 }
 
 // Tela da cobrança: o Tick oferece peças e o jogador escolhe o que a cidade esquece
@@ -76,18 +77,14 @@ function drawOffer() {
   text('← → escolher · E confirmar' + (o.n === o.n0 ? ' · Esc desistir' : ''), HW / 2, by + 112, '#9a9ab0', 'center');
 }
 
-// Caderno do Teo: as pistas descobertas
-function drawBook() {
-  const HW = VW / Hs, HH = VH / Hs, bw = Math.min(HW - 16, 300), bx = (HW - bw) / 2;
-  const rh = Math.min(26, (HH - 44) / CLUES.length), ph = CLUES.length * rh + 28, by = (HH - ph) / 2;
-  veil('rgba(0,0,0,0.78)');
-  px(ctx, '#f0c060', bx - 1, by - 1, bw + 2, ph + 2); px(ctx, '#14141f', bx, by, bw, ph);
-  text('CADERNO DO TEO · ' + FOUND.size + '/' + CLUES.length, bx + 6, by + 5, '#f0c060');
-  CLUES.forEach((c, k) => {
-    const y = by + 20 + k * rh, ok = FOUND.has(c.id);
-    text(ok ? c.t : '???', bx + 6, y, ok ? '#9ad0ff' : '#666');
-    ctx.font = '8px monospace';
-    if (ok) wrap(c.x, bw - 12).slice(0, 2).forEach((l, j) => text(l, bx + 6, y + 9 + j * 8, '#fff'));
-  });
-  text('C ou Esc: fechar', bx + bw - 6, by + ph - 11, '#9a9ab0', 'right');
+
+// Cartão de capítulo no começo de cada fase
+function drawCard() {
+  const HW = VW / Hs, HH = VH / Hs, a = Math.min(1, S.card / 20);
+  veil('rgba(0,0,0,' + (0.92 * a).toFixed(2) + ')');
+  ctx.globalAlpha = a;
+  text(F.nome, HW / 2, HH / 2 - 24, '#f0c060', 'center', 'bold 22px monospace');
+  text(F.sub, HW / 2, HH / 2 + 6, '#fff', 'center', 'bold 10px monospace');
+  text(YEAR.presente + '  >  ' + YEAR.passado, HW / 2, HH / 2 + 22, '#9a9ab0', 'center');
+  ctx.globalAlpha = 1;
 }

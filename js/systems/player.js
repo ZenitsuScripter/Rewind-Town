@@ -3,15 +3,15 @@ function dist(ax, ay, bx, by) { return Math.hypot(ax - bx, ay - by); }
 function say(t) { S.msg = t; S.msgT = 200; }
 
 function interact() {
-  const nearBush = dist(S.px, S.py, BUSH.x, BUSH.y) < 28, nearClock = dist(S.px, S.py, CLOCK.x, CLOCK.y) < 34, past = S.era === 'passado';
-  if (past && dist(S.px, S.py, AMADEU.x, AMADEU.y) < 26) {
+  const nearBush = BUSH && dist(S.px, S.py, BUSH.x, BUSH.y) < 28, nearClock = dist(S.px, S.py, CLOCK.x, CLOCK.y) < 34, past = S.era === 'passado';
+  if (past && AMADEU && dist(S.px, S.py, AMADEU.x, AMADEU.y) < 26) {
     if (ERASED.has('amadeu')) say('O traço no papel não responde. Ninguém aqui conhece você.');
     else { S.dlg = S.cut ? AFTER : S.talked ? AGAIN : FIRST; S.di = 0; S.talked = 1; clue('tick'); }
   } else if (nearBush && past && !S.cut) { S.cut = true; clue('broto'); say('Você cortou o broto. O futuro mudou!'); }
   else if (nearBush && past) replant();
   else if (nearBush && !S.cut) say('Espinhos! Em 1996 isso era só um broto...');
-  else if (nearClock && !past) { clue('1420'); S.won = true; S.winT = hms(S.t); }
-  else if (nearClock) say('Em 1996 o relógio ainda funciona. Volte a 2026.');
+  else if (nearClock && !past && F.goal === 'clock') { clue('1420'); S.won = true; S.winT = hms(S.t); }
+  else if (nearClock) say(F.clockMsg || 'Em 1996 o relógio ainda funciona. Volte a 2026.');
   else say('Nada para fazer aqui.');
 }
 // Plantar o broto de novo: se o jogador já usou o portão aberto, é paradoxo (custa 2 peças)

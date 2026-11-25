@@ -4,7 +4,7 @@ function tile(tx, ty) { const c = LAYOUT[ty][tx], p = PLACE[c]; return p && ERAS
 function solidAt(tx, ty, cut, era) {
   if (tx < 0 || ty < 0 || tx >= COLS || ty >= ROWS) return true;
   const c = tile(tx, ty, era, cut);
-  return c === '#' || isHouse(c) || c === 'C' || (c === 'B' && !cut);
+  return c === '#' || isHouse(c) || c === 'C' || (c === 'B' && !cut) || (c === 'G' && era === 'presente') || (c === 'W' && era === 'passado');
 }
 function hash(x, y) { let h = (x * 374761393 + y * 668265263) >>> 0; h = ((h ^ (h >>> 13)) * 1274126177) >>> 0; return (h ^ (h >>> 16)) >>> 0; }
 function px(c, col, x, y, w, h) { c.fillStyle = col; c.fillRect(x, y, w, h); }
@@ -19,8 +19,8 @@ const isHouse = c => c >= 'a' && c <= 'f';
 
 function drawTiles(g, era, cut) {
   g.scale(Z, Z);
-  const past = era === 'passado', R = (c, x, y, w, h) => px(g, c, x, y, w, h);
-  const G = past ? ['#86b043', '#78a23a', '#9bc450'] : ['#3b6a48', '#325c3e', '#4a7b52'];
+  const past = YEAR[era] < 2000, old = YEAR[era] < 1950, R = (c, x, y, w, h) => px(g, c, x, y, w, h);
+  const G = old ? ['#8f8a4a', '#827d42', '#a39d5a'] : past ? ['#86b043', '#78a23a', '#9bc450'] : ['#3b6a48', '#325c3e', '#4a7b52'];
   for (let ty = 0; ty < ROWS; ty++) for (let tx = 0; tx < COLS; tx++) {
     const c = tile(tx, ty, era, cut), x = tx * T, y = ty * T, h = hash(tx, ty);
     R(G[0], x, y, T, T);
@@ -62,6 +62,12 @@ function drawTiles(g, era, cut) {
         else { R('#f4d84a', x + 3, y + 4, 2, 2); R('#f08aa8', x + 10, y + 9, 2, 2); R('#f4d84a', x + 6, y + 12, 2, 2); }
       } else if (past) { R('#5a8a2a', x + 7, y + 6, 2, 6); R('#7ac03a', x + 4, y + 5, 4, 2); R('#7ac03a', x + 8, y + 3, 4, 2); }
       else { R('#1f5a2a', x + 1, y + 1, 14, 14); R('#2f7a38', x + 3, y + 2, 10, 8); [[2, 2], [12, 4], [5, 11], [11, 12]].forEach(p => R('#d8d8b0', x + p[0], y + p[1], 1, 2)); }
+    } else if (c === 'G') {
+      if (era === 'presente') { R('#2a2a35', x, y + 3, T, 1.5); R('#2a2a35', x, y + 11, T, 1.5); for (let i = 1; i < T; i += 3) { R('#3a3a48', x + i, y + 1, 1, 14); R('#7a7a8a', x + i, y, 1, 2); } }
+      else { R('#8a5a2e', x + 1, y + 2, 2, 12); R('#8a5a2e', x + 13, y + 2, 2, 12); R('#b87a42', x + 1, y + 2, 1, 12); }
+    } else if (c === 'W') {
+      if (era === 'passado') { R('#3a3020', x, y, T, T); R('#2f5566', x + 2, y + 2, 12, 12); R('#4a7a8a', x + 4, y + 5 + (h & 1), 5, 1); R('#6a5a3a', x, y, T, 2); }
+      else { R('#2f5566', x, y, T, T); R('#8a6a3a', x + 1, y, 14, T); for (let i = 3; i < T; i += 4) R('#5e4426', x + 1, y + i, 14, 1); R('#4a3418', x + 1, y, 1, T); R('#4a3418', x + 14, y, 1, T); }
     }
   }
   detail(g, era, cut);
@@ -69,7 +75,7 @@ function drawTiles(g, era, cut) {
   R(past ? '#b8b8c8' : '#7e7e92', X, Y, 32, 32); R(past ? '#d8b04a' : '#5a5a6e', X, Y, 32, 3); R(past ? '#d8b04a' : '#4a4a5e', X, Y + 29, 32, 3);
   R(past ? '#e0e0f0' : '#8e8ea2', X + 2, Y + 3, 2, 26); R(past ? '#d8b04a' : '#55555f', X + 6, Y + 5, 20, 20); R(past ? '#f6f0dc' : '#9c9c92', X + 7, Y + 6, 18, 18);
   if (!past) { R('#3a3a44', X + 12, Y + 6, 1, 6); R('#3a3a44', X + 13, Y + 11, 3, 1); R('#3a3a44', X + 16, Y + 12, 1, 6); R('#2a5a2a', X, Y + 6, 3, 26); R('#2a5a2a', X + 29, Y + 10, 3, 22); R('#3f7f3a', X + 1, Y + 14, 2, 2); }
-  clockFace(g, past);
+  clockFace(g, past, old);
   sketch(g, past);
 }
 function drawHands(c, live, t) {
@@ -82,7 +88,7 @@ function drawHands(c, live, t) {
 
 // Detalhes em meio-pixel: grama, sombras suaves, telhas, copas redondas
 function detail(g, era, cut) {
-  const past = era === 'passado', R = (c, x, y, w, h) => px(g, c, x, y, w, h);
+  const past = YEAR[era] < 2000, R = (c, x, y, w, h) => px(g, c, x, y, w, h);
   const shade = (x, y, h, a) => { const q = g.createLinearGradient(0, y, 0, y + h); q.addColorStop(0, 'rgba(0,0,20,' + a + ')'); q.addColorStop(1, 'rgba(0,0,20,0)'); g.fillStyle = q; g.fillRect(x, y, T, h); };
   for (let ty = 0; ty < ROWS; ty++) for (let tx = 0; tx < COLS; tx++) {
     const c = tile(tx, ty, era, cut), x = tx * T, y = ty * T, edge = tx === 0 || ty === 0 || tx === COLS - 1 || ty === ROWS - 1;
@@ -97,7 +103,8 @@ function detail(g, era, cut) {
     if ((isHouse(c) || c === '#' || c === 'C') && (b === '.' || b === 'P')) shade(x, y + T, 6, 0.35);
   }
 }
-function clockFace(g, past) {
+function clockFace(g, past, old) {
+  if (old) return scaffold(g);
   const R = (c, x, y, w, h) => px(g, c, x, y, w, h), arc = (c, r) => { g.fillStyle = c; g.beginPath(); g.arc(272, 47, r, 0, 6.2832); g.fill(); };
   R(past ? '#b8b8c8' : '#7e7e92', 262, 37, 20, 20);
   if (ERASED.has('sino')) { g.save(); g.strokeStyle = 'rgba(240,240,240,0.9)'; g.lineWidth = 0.5; g.setLineDash([1, 1]); g.strokeRect(270, 27, 4, 4); g.restore(); } else { R('#e8c040', 270, 27, 4, 4); R('#b8901c', 270, 30.5, 4, 0.5); }
@@ -122,4 +129,15 @@ function sketch(g, past) {
     if ((c === '.' || c === 'P') && !isPath(tx, ty) && hash(tx, ty) % 7 === 0) { g.beginPath(); g.arc(tx * T + 6, ty * T + 6, 1.5, 0, 6.2832); g.stroke(); }
   }
   g.restore();
+}
+
+// Torre em obras (1926): andaimes e pedra, sem mostrador
+function scaffold(g) {
+  const R = (c, x, y, w, h) => px(g, c, x, y, w, h);
+  R('#8b7a5a', 256, 44, 32, 20); R('#6f6048', 256, 44, 32, 2);
+  for (let i = 0; i < 4; i++) R('#7a6a4c', 256, 48 + i * 4, 32, 0.5);
+  for (const x of [256, 270, 286]) R('#9a7040', x, 32, 2, 32);
+  R('#b88a52', 256, 38, 32, 2); R('#b88a52', 256, 50, 32, 2);
+  g.strokeStyle = '#9a7040'; g.lineWidth = 0.6; g.beginPath(); g.moveTo(258, 40); g.lineTo(272, 50); g.moveTo(272, 40); g.lineTo(286, 50); g.stroke();
+  R('#c8a050', 264, 30, 8, 2);
 }

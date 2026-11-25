@@ -1,8 +1,8 @@
 // Fase 1: tudo que é dado (mapa, marcos, vigias, peças, falas). O código só lê daqui.
-const YEAR = { presente: 2026, passado: 1996 };
-const TOD0 = 14 * 3600 + 20 * 60;
+let YEAR = { presente: 2026, passado: 1996 };
+let TOD0 = 14 * 3600 + 20 * 60;
 // # muro/cerca  a-f casas  C relógio  B broto  P início
-const LAYOUT = [
+let LAYOUT = [
 "####################",
 "#........#.........#",
 "#.bb.aa..#.eee..CC.#",
@@ -19,13 +19,13 @@ const LAYOUT = [
 "#P.......#.........#",
 "####################"
 ];
-const START = { x: 24, y: 216 }, CLOCK = { x: 272, y: 48 }, BUSH = { x: 152, y: 112 }, AMADEU = { x: 100, y: 108 };
-const GUARDS = [
+let START = { x: 24, y: 216 }, CLOCK = { x: 272, y: 48 }, BUSH = { x: 152, y: 112 }, AMADEU = { x: 100, y: 108 };
+let GUARDS = [
   { x: 128, y: 24, axis: 'y', s: 0.9, d: 1, min: 24, max: 216 },
   { x: 168, y: 80, axis: 'x', s: 1.3, d: 1, min: 168, max: 296 }
 ];
 // As 9 peças da cidade (3 por era). req: só podem ser oferecidas depois disso.
-const PECAS = [
+let PECAS = [
   { id: 'casa-amadeu', nome: 'A casa do Amadeu', tipo: 'lugar', ch: 'a', box: [5, 2, 2, 2] },
   { id: 'casa-lia', nome: 'A casa da Dona Lia', tipo: 'lugar', ch: 'b', box: [2, 2, 2, 2] },
   { id: 'padaria', nome: 'A padaria', tipo: 'lugar', ch: 'c', box: [2, 9, 2, 2] },
@@ -36,21 +36,21 @@ const PECAS = [
   { id: 'flores', nome: 'As flores de 1996', tipo: 'objeto' },
   { id: 'sino', nome: 'O sino da torre', tipo: 'acontecimento' }
 ];
-const PLACE = {}; PECAS.forEach(p => { if (p.ch) PLACE[p.ch] = p.id; });
+let PLACE = {}; PECAS.forEach(p => { if (p.ch) PLACE[p.ch] = p.id; });
 const EFEITO = { lugar: 'vira passagem livre', pessoa: 'esquece você', objeto: 'perde a cor', acontecimento: 'deixa de ter existido' };
 
-const INTRO = [
+let INTRO = [
   ['', '2026. A torre do relógio parou e a cidade está esquecendo de si mesma.'],
   ['', 'Teo achou um relógio de bolso, o TICK. Ele para o tempo, volta o tempo e leva a outros anos.'],
   ['', 'Mas cada ida ao passado cobra uma peça da cidade, que some para sempre. E os Vigias do Tempo caçam quem viaja.']
 ];
-const FIRST = [
+let FIRST = [
   ['Amadeu', 'Teo? Esse relógio no seu bolso... eu o desenhei, mas só vou construí-lo em 1997.'],
   ['Amadeu', 'Um broto de espinhos nasceu no portão do meio. Daqui a trinta anos ele vai sufocar a torre.'],
   ['Amadeu', 'Corte o broto (E), de perto. E lembre: o Tick sempre cobra um preço.']
 ];
-const AGAIN = [['Amadeu', 'O broto fica no portão do meio. Chegue perto e use E. Cuidado com os Vigias.']];
-const AFTER = [
+let AGAIN = [['Amadeu', 'O broto fica no portão do meio. Chegue perto e use E. Cuidado com os Vigias.']];
+let AFTER = [
   ['Amadeu', 'O portão está livre. Volte a 2026 (T) e conserte a torre.'],
   ['Amadeu', 'Plantar o broto de novo, depois de você já ter passado por lá, seria um paradoxo. O Tick cobraria o dobro.']
 ];
@@ -64,3 +64,7 @@ const CLUES = [
   { id: 'vigias', t: 'Os Vigias', x: 'Os Vigias caçam quem viaja com o Tick. Quem são eles?' },
   { id: '1420', t: 'O minuto 14:20', x: 'A torre parou às 14:20, a mesma hora em que o Teo achou o Tick.' }
 ];
+
+const FASE1 = { nome: 'FASE 1', sub: 'O MINUTO PERDIDO', YEAR, TOD0, LAYOUT, START, CLOCK, BUSH, AMADEU, GUARDS, PECAS, INTRO, FIRST, AGAIN, AFTER, goal: 'clock', next: 1,
+  fim: ['FIM DA FASE 1', 'A torre parou às 14:20. Por quê?', 'ENTER: próxima fase'] };
+let F = FASE1;
