@@ -40,7 +40,7 @@ const FASE2 = {
     ['', 'E em 1926 o minuto 14:20 se repete sem parar. Chegue ao pátio durante ele.']
   ],
   FIRST: [], AGAIN: [], AFTER: [],
-  goal: 'plaza', PLAZA: { x: 264, y: 84, r: 26 }, loop: [60, 120], next: null,
+  goal: 'plaza', path: (tx, ty) => ty === 12 || (tx === 16 && ty > 5 && ty < 12) || (ty >= 4 && ty <= 5 && tx > 9), PLAZA: { x: 264, y: 84, r: 26 }, loop: [60, 120], next: null,
   clockMsg: 'A torre. Chegue ao pátio durante o minuto 14:20.',
   CEREMONIA: [
     ['', '1926, 14:20. A torre ainda não tem ponteiros. A cidade inteira espera a inauguração.'],

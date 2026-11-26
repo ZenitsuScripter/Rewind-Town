@@ -36,7 +36,7 @@ function movePlayer() {
   if (keys.ArrowUp || keys.KeyW) dy--;
   if (keys.ArrowDown || keys.KeyS) dy++;
   if (dx && dy) { dx *= 0.7071; dy *= 0.7071; }
-  S.mv = dx || dy ? 1 : 0; if (S.mv) S.walk++;
+  S.mv = dx || dy ? 1 : 0; if (S.mv) { S.walk++; S.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 2 : 3) : (dy < 0 ? 1 : 0); }
   if (!blocked(S.px + dx * 1.1, S.py)) S.px += dx * 1.1;
   if (!blocked(S.px, S.py + dy * 1.1)) S.py += dy * 1.1;
 }

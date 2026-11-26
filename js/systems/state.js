@@ -4,7 +4,7 @@ const S = {
   stopped: false, rewinding: false, caught: false, won: false, frame: 0, eraCd: 0, trav: 0, walk: 0,
   msg: '', msgT: 0, winT: '', dlg: null, di: 0, talked: 0,
   offer: null, end: null, used: 0, mv: 0, note: 0, book: false,
-  title: true, fase: 0, card: 0, glitch: 0, bp: 0, bflip: 0, menu: 0, after: null, hasSave: false
+  title: true, dir: 0, fase: 0, card: 0, glitch: 0, bp: 0, bflip: 0, menu: 0, after: null, hasSave: false
 };
 const HN = 360, HS = 15, HB = new Float32Array(HN * HS);
 let hHead = 0, hLen = 0;

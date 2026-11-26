@@ -65,6 +65,6 @@ const CLUES = [
   { id: '1420', t: 'O minuto 14:20', x: 'A torre parou às 14:20, a mesma hora em que o Teo achou o Tick.' }
 ];
 
-const FASE1 = { nome: 'FASE 1', sub: 'O MINUTO PERDIDO', YEAR, TOD0, LAYOUT, START, CLOCK, BUSH, AMADEU, GUARDS, PECAS, INTRO, FIRST, AGAIN, AFTER, goal: 'clock', next: 1,
+const FASE1 = { nome: 'FASE 1', sub: 'O MINUTO PERDIDO', YEAR, TOD0, LAYOUT, START, CLOCK, BUSH, AMADEU, GUARDS, PECAS, INTRO, FIRST, AGAIN, AFTER, goal: 'clock', next: 1, path: (tx, ty) => ty === 6 || ty === 7 || tx === 4 || (tx === 15 && ty < 8),
   fim: ['FIM DA FASE 1', 'A torre parou às 14:20. Por quê?', 'ENTER: próxima fase'] };
 let F = FASE1;

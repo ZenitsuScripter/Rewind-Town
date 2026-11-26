@@ -1,90 +1,93 @@
-// HUD, diálogos e a tela da cobrança (desenhados em unidades de HUD, nítidos em qualquer tela)
-function text(str, x, y, col, align, font) {
-  ctx.font = font || '8px monospace'; ctx.textBaseline = 'top'; ctx.textAlign = align || 'left';
-  ctx.fillStyle = '#000'; ctx.fillText(str, x + 1, y + 1); ctx.fillStyle = col; ctx.fillText(str, x, y);
+// Interface em pixel art (mesma escala de pixel do mundo): painéis, ícones, fonte de pixel e efeitos de tela
+const ICONS = {
+  lugar: ['...#...', '..###..', '.#####.', '#######', '.#...#.', '.#.#.#.', '.#####.'],
+  pessoa: ['..###..', '.#####.', '.#####.', '..###..', '.#####.', '#######', '#######'],
+  objeto: ['..#.#..', '.#####.', '..###..', '...#...', '..##...', '...#...', '...#...'],
+  acontecimento: ['...#...', '..###..', '#######', '.#####.', '..###..', '.##.##.', '##...##']
+};
+const ICOL = { lugar: '#ffd36a', pessoa: '#ff9ab0', objeto: '#8aff9a', acontecimento: '#9ad8ff' };
+function icon(c, p, x, y, gone, k) {
+  k = k || 1;
+  ICONS[p.tipo].forEach((r, j) => { for (let i = 0; i < 7; i++) if (r[i] === '#' && (!gone || (i + j) % 2 === 0)) px(c, gone ? '#6a6488' : ICOL[p.tipo], x + i * k, y + j * k, k, k); });
 }
-function wrap(str, maxW) {
-  const out = []; let line = '';
-  for (const w of str.split(' ')) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t; }
-  out.push(line); return out;
+function dial(c, cx, cy, r, t, rew) {
+  disc(c, '#6a5a8a', cx, cy, r); disc(c, '#14101e', cx, cy, r - 1);
+  for (let i = 0; i < 12; i++) { const a = i * 0.5236; px(c, i % 3 ? '#4a4264' : '#c8bce8', cx + Math.cos(a) * (r - 3), cy + Math.sin(a) * (r - 3), 1, 1); }
+  const a = ang(t);
+  line(c, '#f4ecd8', cx, cy, cx + Math.cos(a[0]) * r * 0.45, cy + Math.sin(a[0]) * r * 0.45); line(c, '#f4ecd8', cx, cy, cx + Math.cos(a[1]) * r * 0.7, cy + Math.sin(a[1]) * r * 0.7);
+  line(c, rew ? '#e0a0ff' : '#ff6a5a', cx, cy, cx + Math.cos(a[2]) * r * 0.82, cy + Math.sin(a[2]) * r * 0.82); px(c, '#f4ecd8', cx - 1, cy - 1, 2, 2);
 }
-const veil = (col) => { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = col; ctx.fillRect(0, 0, VW, VH); ctx.restore(); };
-function drawHUD(past) {
-  ctx.setTransform(Hs, 0, 0, Hs, 0, 0); const HW = VW / Hs, HH = VH / Hs;
-  // HUD: era + energia
-  text(S.era === 'passado' ? 'PASSADO' : 'PRESENTE', 6, 5, past ? '#f0c060' : '#9ad0ff');
-  px(ctx, '#111', 6, 16, 62, 6); px(ctx, S.energy < 15 ? '#e05050' : '#58d0ff', 7, 17, 60 * S.energy / 100, 4);
-  PECAS.forEach((p, i) => { if (ERASED.has(p.id)) { ctx.strokeStyle = '#d8d8d8'; ctx.lineWidth = 0.5; ctx.strokeRect(6.25 + i * 7, 25.25, 4.5, 4.5); } else px(ctx, '#f0c060', 6 + i * 7, 25, 5, 5); });
-  text('PEÇAS', 74, 23, '#9a9ab0');
-  if (S.stopped) text('TEMPO PARADO', 74, 5, '#b0c0ff');
-  if (S.rewinding) text('VOLTANDO O TEMPO', 74, 5, '#e0a0ff');
-  // HUD: ano, relógio analógico e digital (os ponteiros e os segundos voltam junto com o tempo)
-  const yr = S.trav > 0 ? Math.round(YEAR[S.from] + (YEAR[S.era] - YEAR[S.from]) * (1 - S.trav / 50)) : YEAR[S.era];
-  const x = HW - 88, y = 5, a = ang(S.t), dx = x + 17, dy = y + 16;
-  px(ctx, 'rgba(8,8,16,0.75)', x, y, 82, 32); px(ctx, past ? '#d8b04a' : '#58b8e8', x, y, 82, 1);
-  ctx.lineWidth = 1; ctx.strokeStyle = '#9a9ab0'; ctx.beginPath(); ctx.arc(dx, dy, 11, 0, 6.2832); ctx.stroke();
-  [[a[0], 5, '#fff'], [a[1], 8, '#fff'], [a[2], 9, S.rewinding ? '#e0a0ff' : '#f55']].forEach(h => {
-    ctx.strokeStyle = h[2]; ctx.beginPath(); ctx.moveTo(dx, dy); ctx.lineTo(dx + Math.cos(h[0]) * h[1], dy + Math.sin(h[0]) * h[1]); ctx.stroke();
+// efeitos de tela chapados (sem degradê) e vinheta em dither
+function drawGrade() {
+  if (S.stopped) { ctx.globalCompositeOperation = 'multiply'; veil('#8f9ee0'); ctx.globalCompositeOperation = 'source-over'; }
+  if (S.rewinding) { veil('rgba(170,80,220,0.2)'); ctx.fillStyle = 'rgba(255,255,255,0.14)'; for (let y = (AF * 2) % 6; y < VH; y += 6) ctx.fillRect(0, y, VW, 1); }
+  if (S.trav > 0) { veil('rgba(255,255,255,' + (Math.sin(S.trav / 50 * 3.1416) * 0.5).toFixed(2) + ')'); ctx.fillStyle = 'rgba(120,200,255,0.35)'; for (let i = 0; i < 6; i++) ctx.fillRect(0, hash(i, S.trav) % VH, VW, 2); }
+  if (S.glitch > 0) { veil('rgba(255,255,255,0.16)'); ctx.fillStyle = 'rgba(255,255,255,0.5)'; for (let i = 0; i < 5; i++) ctx.fillRect(0, hash(i, S.glitch) % VH, VW, 1); }
+  [[0, 0], [10, 3], [20, 2], [30, 1]].forEach(b => {
+    const o = b[0]; ctx.globalAlpha = 0.3; ctx.fillStyle = b[1] ? pat(ctx, '#0a0614', b[1]) : '#0a0614';
+    ctx.fillRect(0, o, VW, 10); ctx.fillRect(0, VH - o - 10, VW, 10); ctx.fillRect(o, o + 10, 10, VH - 2 * o - 20); ctx.fillRect(VW - o - 10, o + 10, 10, VH - 2 * o - 20);
   });
-  text(String(yr), x + 33, y + 3, past ? '#f0c060' : '#9ad0ff', 'left', 'bold 11px monospace');
-  text(hms(S.t), x + 33, y + 19, S.stopped ? '#b0c0ff' : S.rewinding ? '#e0a0ff' : '#fff');
-  if (S.trav > 0) text('VIAGEM ' + YEAR[S.from] + ' > ' + YEAR[S.era], x + 41, y + 36, '#fff', 'center');
-
-  if (S.dlg) {
-    const d = S.dlg[S.di], bw = Math.min(HW - 24, 300), bx = (HW - bw) / 2, bh = 48, by = HH - bh - 10;
-    px(ctx, '#f0c060', bx - 1, by - 1, bw + 2, bh + 2); px(ctx, '#14141f', bx, by, bw, bh);
-    if (d[0]) text(d[0], bx + 6, by + 4, '#f0c060');
-    ctx.font = '8px monospace'; wrap(d[1], bw - 12).forEach((l, i) => text(l, bx + 6, by + 15 + i * 10, '#fff'));
-    if ((S.frame >> 4 & 1) || true) text('E >', bx + bw - 6, by + bh - 11, '#9a9ab0', 'right');
-  } else if (S.msgT > 0 || S.caught) {
-    px(ctx, 'rgba(0,0,0,0.65)', 0, HH - 18, HW, 16); text(S.msg, HW / 2, HH - 14, '#fff', 'center');
-  }
+  ctx.globalAlpha = 1;
+}
+function drawHUD() {
+  const L = look(S.era), warm = L !== 'ruin', gold = warm ? '#ffd36a' : '#9ad8ff', yr = S.trav > 0 ? Math.round(YEAR[S.from] + (YEAR[S.era] - YEAR[S.from]) * (1 - S.trav / 50)) : YEAR[S.era];
+  panel(ctx, 6, 6, 108, 48);
+  txt(ctx, S.era === 'passado' ? 'PASSADO' : 'PRESENTE', 14, 13, gold);
+  const n = 14, on = Math.ceil(S.energy / 100 * n);
+  for (let i = 0; i < n; i++) px(ctx, i < on ? (S.energy < 15 ? '#e05050' : '#58d0ff') : '#2a2438', 14 + i * 6, 25, 5, 6);
+  PECAS.forEach((p, i) => icon(ctx, p, 14 + i * 11, 37, ERASED.has(p.id)));
+  const cx = VW - 126;
+  panel(ctx, cx, 6, 120, 44); px(ctx, gold, cx + 3, 6, 114, 1);
+  dial(ctx, cx + 24, 28, 17, S.t, S.rewinding);
+  txt(ctx, yr, cx + 50, 12, gold, { s: 2 });
+  txt(ctx, hms(S.t), cx + 50, 32, S.stopped ? '#b0c0ff' : S.rewinding ? '#e0a0ff' : '#f4ecd8');
+  if (S.trav > 0) txt(ctx, 'VIAGEM ' + YEAR[S.from] + ' > ' + YEAR[S.era], cx + 60, 56, '#f4ecd8', { a: 'center' });
+  if (S.stopped || S.rewinding) { const s = S.stopped ? 'TEMPO PARADO' : 'VOLTANDO O TEMPO', w = tw(s, 1) + 24; panel(ctx, (VW - w) >> 1, 6, w, 18, '#181424', S.stopped ? '#7a8ae0' : '#b070e0'); txt(ctx, s, VW >> 1, 11, S.stopped ? '#b0c0ff' : '#e0a0ff', { a: 'center' }); }
+  if (S.note > 0) { const s = 'NOVA PISTA NO CADERNO (C)', w = tw(s, 1) + 24; panel(ctx, (VW - w) >> 1, 28, w, 18); txt(ctx, s, VW >> 1, 33, '#ffd36a', { a: 'center' }); }
+  if (S.dlg) drawDialog();
+  else if (S.msgT > 0 || S.caught) { const w = tw(S.msg, 1) + 28; panel(ctx, (VW - w) >> 1, VH - 32, w, 20); txt(ctx, S.msg, VW >> 1, VH - 26, '#f4ecd8', { a: 'center' }); }
+  else txt(ctx, 'SETAS/WASD MOVER · ESPAÇO PARAR · R VOLTAR · T VIAJAR · E AGIR · C CADERNO · F TELA CHEIA', VW >> 1, VH - 12, '#6a6488', { a: 'center', sh: null });
   if (S.won) {
-    veil('rgba(0,0,0,0.78)'); const m = HH / 2;
-    text(F.fim[0], HW / 2, m - 34, '#f0c060', 'center', 'bold 11px monospace');
-    text(YEAR[S.era] + ' · ' + S.winT, HW / 2, m - 16, '#fff', 'center');
-    text(F.fim[1], HW / 2, m, '#9ad0ff', 'center');
-    text('Pistas: ' + FOUND.size + ' de ' + CLUES.length + ' · Peças que restaram: ' + (PECAS.length - nGone()) + ' de ' + PECAS.length, HW / 2, m + 12, '#9ad0ff', 'center');
-    text(S.won ? F.fim[2] : 'ENTER: recomeçar a fase', HW / 2, m + 34, '#aaa', 'center');
+    veil('rgba(8,4,16,0.8)'); const w = 400, h = 136, x = (VW - w) >> 1, y = (VH - h) >> 1;
+    panel(ctx, x, y, w, h); txt(ctx, F.fim[0], VW >> 1, y + 16, '#ffd36a', { a: 'center', s: 3 });
+    txt(ctx, YEAR[S.era] + ' · ' + S.winT, VW >> 1, y + 48, '#f4ecd8', { a: 'center' }); txt(ctx, F.fim[1], VW >> 1, y + 64, '#9ad8ff', { a: 'center' });
+    txt(ctx, 'PISTAS: ' + FOUND.size + ' DE ' + CLUES.length + ' · PEÇAS QUE RESTARAM: ' + (PECAS.length - nGone()) + ' DE ' + PECAS.length, VW >> 1, y + 80, '#9ad8ff', { a: 'center' });
+    txt(ctx, S.won ? F.fim[2] : '', VW >> 1, y + 108, '#8a84a8', { a: 'center' });
   }
   if (S.end) {
-    veil('rgba(255,255,255,0.92)');
-    text('FIM EM BRANCO', HW / 2, HH / 2 - 18, '#444', 'center', 'bold 11px monospace');
-    text('A cidade esqueceu tudo, até você.', HW / 2, HH / 2, '#444', 'center');
-    text('ENTER: recomeçar', HW / 2, HH / 2 + 22, '#777', 'center');
+    veil('rgba(244,240,232,0.94)'); txt(ctx, 'FIM EM BRANCO', VW >> 1, (VH >> 1) - 30, '#444', { a: 'center', s: 3, sh: null });
+    txt(ctx, 'A cidade esqueceu tudo, até você.', VW >> 1, VH >> 1, '#555', { a: 'center', sh: null }); txt(ctx, 'ENTER: recomeçar a fase', VW >> 1, (VH >> 1) + 30, '#888', { a: 'center', sh: null });
   }
-  if (S.note > 0) { px(ctx, 'rgba(0,0,0,0.65)', HW / 2 - 66, 22, 132, 14); text('Nova pista no caderno (C)', HW / 2, 25, '#f0c060', 'center'); }
   if (S.offer) drawOffer();
   if (S.book) drawBook();
   if (S.card > 0) drawCard();
 }
-
-// Tela da cobrança: o Tick oferece peças e o jogador escolhe o que a cidade esquece
-function drawOffer() {
-  const HW = VW / Hs, HH = VH / Hs, o = S.offer, bw = Math.min(HW - 16, 300), bx = (HW - bw) / 2, by = HH / 2 - 52;
-  veil('rgba(0,0,0,0.72)');
-  text('O TICK COBRA ' + o.n + (o.n > 1 ? ' PEÇAS' : ' PEÇA'), HW / 2, by, '#f0c060', 'center', 'bold 11px monospace');
-  text('Escolha o que a cidade vai esquecer para sempre.', HW / 2, by + 16, '#fff', 'center');
-  const cw = (bw - 8 * (o.opts.length - 1)) / o.opts.length;
-  o.opts.forEach((p, i) => {
-    const x = bx + i * (cw + 8), y = by + 32, sel = i === o.i;
-    px(ctx, sel ? '#f0c060' : '#444', x - 1, y - 1, cw + 2, 70); px(ctx, '#14141f', x, y, cw, 68);
-    text(p.tipo.toUpperCase(), x + cw / 2, y + 6, sel ? '#f0c060' : '#9a9ab0', 'center');
-    ctx.font = '8px monospace';
-    wrap(p.nome, cw - 8).forEach((l, j) => text(l, x + cw / 2, y + 20 + j * 10, '#fff', 'center'));
-    wrap(EFEITO[p.tipo], cw - 8).forEach((l, j) => text(l, x + cw / 2, y + 46 + j * 10, sel ? '#9ad0ff' : '#777', 'center'));
-  });
-  text('← → escolher · E confirmar' + (o.n === o.n0 ? ' · Esc desistir' : ''), HW / 2, by + 112, '#9a9ab0', 'center');
+function drawDialog() {
+  const d = S.dlg[S.di], w = Math.min(VW - 40, 540), h = 74, x = (VW - w) >> 1, y = VH - h - 16;
+  panel(ctx, x, y, w, h);
+  if (d[0]) { const nw = tw(d[0], 1) + 16; panel(ctx, x + 12, y - 10, nw, 16, '#2a2040', '#ffd36a'); txt(ctx, d[0], x + 20, y - 5, '#ffd36a'); }
+  wrapT(d[1], w - 32, 1).forEach((l, j) => txt(ctx, l, x + 16, y + 16 + j * 13, '#f4ecd8'));
+  if ((AF >> 4) & 1) { px(ctx, '#ffd36a', x + w - 22, y + h - 16, 7, 3); px(ctx, '#ffd36a', x + w - 20, y + h - 13, 3, 1); }
 }
-
-
-// Cartão de capítulo no começo de cada fase
+function drawOffer() {
+  const o = S.offer, n = o.opts.length, cw = 132, gap = 12, bw = n * cw + (n - 1) * gap, bx = (VW - bw) >> 1, by = (VH >> 1) - 92;
+  veil('rgba(8,4,16,0.78)');
+  txt(ctx, 'O TICK COBRA ' + o.n + (o.n > 1 ? ' PEÇAS' : ' PEÇA'), VW >> 1, by, '#ffd36a', { a: 'center', s: 2 });
+  txt(ctx, 'Escolha o que a cidade vai esquecer para sempre.', VW >> 1, by + 24, '#f4ecd8', { a: 'center' });
+  o.opts.forEach((p, i) => {
+    const x = bx + i * (cw + gap), y = by + 46, sel = i === o.i;
+    panel(ctx, x, y, cw, 112, sel ? '#241c36' : '#181424', sel ? '#ffd36a' : '#4a4264');
+    txt(ctx, p.tipo, x + cw / 2, y + 10, sel ? '#ffd36a' : '#8a84a8', { a: 'center', sh: null });
+    icon(ctx, p, x + cw / 2 - 10, y + 24, false, 3);
+    wrapT(p.nome, cw - 16, 1).forEach((l, j) => txt(ctx, l, x + cw / 2, y + 54 + j * 11, '#f4ecd8', { a: 'center' }));
+    wrapT(EFEITO[p.tipo], cw - 16, 1).forEach((l, j) => txt(ctx, l, x + cw / 2, y + 86 + j * 11, sel ? '#9ad8ff' : '#6a6488', { a: 'center' }));
+  });
+  txt(ctx, '< > ESCOLHER · E CONFIRMAR' + (o.n === o.n0 ? ' · ESC DESISTIR' : ''), VW >> 1, by + 172, '#8a84a8', { a: 'center' });
+}
 function drawCard() {
-  const HW = VW / Hs, HH = VH / Hs, a = Math.min(1, S.card / 20);
-  veil('rgba(0,0,0,' + (0.92 * a).toFixed(2) + ')');
-  ctx.globalAlpha = a;
-  text(F.nome, HW / 2, HH / 2 - 24, '#f0c060', 'center', 'bold 22px monospace');
-  text(F.sub, HW / 2, HH / 2 + 6, '#fff', 'center', 'bold 10px monospace');
-  text(YEAR.presente + '  >  ' + YEAR.passado, HW / 2, HH / 2 + 22, '#9a9ab0', 'center');
+  const a = Math.min(1, S.card / 20); veil('rgba(8,4,16,' + (0.94 * a).toFixed(2) + ')'); ctx.globalAlpha = a;
+  txt(ctx, F.nome, VW >> 1, (VH >> 1) - 40, '#ffd36a', { a: 'center', s: 5 });
+  txt(ctx, F.sub, VW >> 1, (VH >> 1) + 6, '#f4ecd8', { a: 'center', s: 2 });
+  txt(ctx, YEAR.presente + '  >  ' + YEAR.passado, VW >> 1, (VH >> 1) + 34, '#8a84a8', { a: 'center' });
   ctx.globalAlpha = 1;
 }
